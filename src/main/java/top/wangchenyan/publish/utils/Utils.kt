@@ -15,7 +15,8 @@ object Utils {
             val log = res.msg ?: ""
             return log.lines()
                 .map {
-                    "- ${it.substring(9)}"
+                    val blankIndex = it.indexOf(' ')
+                    "- ${it.substring(blankIndex + 1)}"
                 }
                 .joinToString("\n")
         } else {
