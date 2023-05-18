@@ -18,11 +18,11 @@ data class CommonResult<T>(
         private const val CODE_SUCCESS = 0
 
         fun <T> success(data: T): CommonResult<T> {
-            return CommonResult(200, null, data)
+            return CommonResult(CODE_SUCCESS, null, data)
         }
 
         fun <T> fail(code: Int = -1, msg: String? = null): CommonResult<T> {
-            val c = if (code == 200) -1 else code
+            val c = if (code == CODE_SUCCESS) -1 else code
             return CommonResult(c, msg, null)
         }
     }

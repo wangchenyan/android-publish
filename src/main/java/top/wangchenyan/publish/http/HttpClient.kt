@@ -6,17 +6,24 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
+import top.wangchenyan.publish.utils.CommonResult
 import top.wangchenyan.publish.utils.Log
 import top.wangchenyan.publish.utils.Utils
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
-class HttpClient(private val url: String) {
-    private val params: MutableMap<String, Any> = mutableMapOf()
+class HttpClient private constructor(
+    private val url: String,
+    private val method: RequestMethod
+) {
+    private val queryParams: MutableMap<String, Any> = mutableMapOf()
+    private val formParams: MutableMap<String, Any> = mutableMapOf()
     private val files: MutableMap<String, Pair<File, ProgressListener?>> = mutableMapOf()
-    private var method: RequestMethod = RequestMethod.GET
 
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -25,96 +32,125 @@ class HttpClient(private val url: String) {
             .readTimeout(10, TimeUnit.MINUTES)
             .build()
     }
-    private val gson: Gson by lazy { Gson() }
+    val gson: Gson by lazy { Gson() }
 
-    fun get(): HttpClient = apply {
-        method = RequestMethod.GET
+    fun addQueryParams(key: String, value: Any) = apply {
+        queryParams[key] = value
     }
 
-    fun post(): HttpClient = apply {
-        method = RequestMethod.POST
+    fun addFormParams(key: String, value: Any) = apply {
+        formParams[key] = value
     }
 
-    fun put(): HttpClient = apply {
-        method = RequestMethod.PUT
-    }
-
-    fun addParams(key: String, value: Any): HttpClient {
-        params[key] = value
-        return this
-    }
-
-    fun addFile(key: String, file: File, listener: ProgressListener? = null): HttpClient {
+    fun addFile(key: String, file: File, listener: ProgressListener? = null) = apply {
         files[key] = Pair(file, listener)
-        return this
     }
 
-    @Throws(RuntimeException::class)
-    fun download(file: File) {
+    fun download(file: File): CommonResult<Any> {
+        val url = getUrlWithQueryParams()
         Log.i("Start download url: $url")
         val builder = Request.Builder()
         builder.url(url)
         var response: Response? = null
-        try {
+        return try {
             response = client.newCall(builder.build()).execute()
             if (response.isSuccessful) {
                 saveFile(response, file)
             } else {
-                throw RuntimeException("Download fail, code=${response.code}, msg=${response.message}")
+                CommonResult.fail(response.code, response.message)
             }
+        } catch (e: Exception) {
+            Log.i("download error, ${e.message}")
+            e.printStackTrace()
+            CommonResult.fail(msg = e.message)
         } finally {
             response?.close()
         }
     }
 
-    @Throws(RuntimeException::class)
-    fun <T> start(clazz: Class<T>): T? {
+    fun requestRaw(): CommonResult<String> {
+        val url = getUrlWithQueryParams()
         Log.i("Start request url: $url")
         val builder = Request.Builder()
         builder.url(url)
-        if (method == RequestMethod.PUT) {
-            builder.put(createRequestBody())
-        } else if (method == RequestMethod.POST) {
-            builder.post(createRequestBody())
-        } else {
-            builder.get()
+        when (method) {
+            RequestMethod.PUT -> {
+                builder.put(createRequestBody())
+            }
+
+            RequestMethod.POST -> {
+                builder.post(createRequestBody())
+            }
+
+            else -> {
+                builder.get()
+            }
         }
         var response: Response? = null
-        try {
+        return try {
             response = client.newCall(builder.build()).execute()
-            if (response.isSuccessful) {
-                val result = response.body!!.string()
-                Log.i("Response: $result")
-                return gson.fromJson(result, clazz)
-            } else {
-                throw RuntimeException("Request fail, code=${response.code}, msg=${response.message}")
-            }
+            val body = response.body?.string()
+            Log.i("Response code: ${response.code}, body: $body")
+            CommonResult(response.code, "", body)
+        } catch (e: Exception) {
+            Log.i("request error, ${e.message}")
+            e.printStackTrace()
+            CommonResult.fail(msg = e.message)
         } finally {
             response?.close()
         }
+    }
+
+    inline fun <reified T> request(): CommonResult<T> {
+        val res = requestRaw()
+        return if (res.code in 200..299 && res.data != null) {
+            val data = gson.fromJson(res.data, T::class.java)
+            CommonResult.success(data)
+        } else {
+            CommonResult.fail(res.code, res.msg)
+        }
+    }
+
+    private fun getUrlWithQueryParams(): String {
+        val sb = StringBuilder(url)
+        queryParams.forEach { (key, value) ->
+            if (sb.contains("?")) {
+                sb.append("&")
+            } else {
+                sb.append("?")
+            }
+            sb.append(
+                "${key}=${
+                    URLEncoder.encode(
+                        value.toString(),
+                        StandardCharsets.UTF_8.toString()
+                    )
+                }"
+            )
+        }
+        return sb.toString()
     }
 
     private fun createRequestBody(): RequestBody {
         val body = MultipartBody.Builder()
         body.setType(MultipartBody.FORM)
-        files.forEach { key, value ->
+        files.forEach { (key, value) ->
             body.addFormDataPart(
                 key,
                 value.first.name,
                 FileProgressRequestBody(value.first, value.second)
             )
         }
-        params.forEach { key, value ->
+        formParams.forEach { (key, value) ->
             body.addFormDataPart(key, value.toString())
         }
         return body.build()
     }
 
-    private fun saveFile(response: Response, file: File): String? {
-        var filePath: String? = null
+    private fun saveFile(response: Response, file: File): CommonResult<Any> {
         var inputStream: InputStream? = null
         var current = 0L
-        val buf = ByteArray(3072)
+        val buf = ByteArray(4096)
         var fos: FileOutputStream? = null
         try {
             inputStream = response.body!!.byteStream()
@@ -127,16 +163,31 @@ class HttpClient(private val url: String) {
                 val percent =
                     if (total == 0L) 0.0f else current.toFloat() * 100.0f / total.toFloat()
                 if (percent % 10 == 0f) {
-                    Log.i("下载进度：$percent%")
+                    Log.i("下载进度: $percent%")
                 }
             }
             fos.flush()
-            filePath = file.absolutePath
-        } catch (e: Exception) {
-            RuntimeException(e)
+            return CommonResult.success(0)
+        } catch (e: IOException) {
+            Log.i("saveFile error, ${e.message}")
+            e.printStackTrace()
+            return CommonResult.fail(msg = e.message)
         } finally {
             Utils.closeIO(inputStream, fos)
-            return filePath
+        }
+    }
+
+    companion object {
+        fun get(url: String): HttpClient {
+            return HttpClient(url, RequestMethod.GET)
+        }
+
+        fun post(url: String): HttpClient {
+            return HttpClient(url, RequestMethod.POST)
+        }
+
+        fun put(url: String): HttpClient {
+            return HttpClient(url, RequestMethod.PUT)
         }
     }
 

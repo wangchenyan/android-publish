@@ -28,22 +28,22 @@ object Utils {
         var process: Process? = null
         var code = -1
         var message = ""
-        Log.i("执行命令：\n==========>\n$command\n<==========")
+        Log.i("执行命令: \n==========>\n$command\n<==========")
         kotlin.runCatching {
             process = Runtime.getRuntime().exec(command)
             BufferedReader(InputStreamReader(process!!.inputStream)).useLines { lines ->
                 message = lines.joinToString("\n")
-                Log.i("输出：\n==========>\n$message\n<==========")
+                Log.i("输出: \n==========>\n$message\n<==========")
             }
             BufferedReader(InputStreamReader(process!!.errorStream)).useLines { lines ->
                 val error = lines.joinToString("\n")
-                Log.i("错误：\n==========>\n$error\n<==========")
+                Log.i("错误: \n==========>\n$error\n<==========")
             }
             code = process!!.waitFor()
         }.onSuccess {
             Log.i("执行成功")
         }.onFailure { e ->
-            Log.i("执行失败")
+            Log.i("执行失败, ${e.message}")
             e.printStackTrace()
         }
         process?.destroy()

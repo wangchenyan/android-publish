@@ -16,6 +16,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("commons-io:commons-io:2.11.0")
     implementation("commons-codec:commons-codec:1.15")
+    implementation("org.apache.httpcomponents:httpclient:4.5.14")
+    implementation("org.apache.httpcomponents:httpmime:4.5.14")
 }
 
 java {

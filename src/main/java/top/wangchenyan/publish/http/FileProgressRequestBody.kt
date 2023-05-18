@@ -5,10 +5,10 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.internal.closeQuietly
 import okio.BufferedSink
+import okio.IOException
 import okio.Source
 import okio.source
 import java.io.File
-import java.io.IOException
 
 open class FileProgressRequestBody(
     private var file: File,
@@ -43,7 +43,7 @@ open class FileProgressRequestBody(
                 }
             }
         } finally {
-            source!!.closeQuietly()
+            source?.closeQuietly()
         }
     }
 
