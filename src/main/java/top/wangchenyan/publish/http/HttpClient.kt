@@ -155,15 +155,18 @@ class HttpClient private constructor(
         try {
             inputStream = response.body!!.byteStream()
             val total = response.body!!.contentLength()
+            var progress = 0
             fos = FileOutputStream(file)
             var len: Int
             while (inputStream.read(buf).also { len = it } != -1) {
                 current += len.toLong()
                 fos.write(buf, 0, len)
-                val percent =
-                    if (total == 0L) 0.0f else current.toFloat() * 100.0f / total.toFloat()
-                if (percent % 10 == 0f) {
-                    Log.i("下载进度: $percent%")
+                if (total > 0) {
+                    val currentProgress = (current * 100f / total).toInt()
+                    if (currentProgress != progress) {
+                        progress = currentProgress
+                        Log.i("下载进度: $progress%")
+                    }
                 }
             }
             fos.flush()

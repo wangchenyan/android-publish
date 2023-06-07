@@ -18,6 +18,8 @@ dependencies {
     implementation("commons-codec:commons-codec:1.15")
     implementation("org.apache.httpcomponents:httpclient:4.5.14")
     implementation("org.apache.httpcomponents:httpmime:4.5.14")
+    implementation("com.aliyun.oss:aliyun-sdk-oss:3.15.1")
+    implementation("com.tencentcloudapi:tencentcloud-sdk-java:3.1.771")
 }
 
 java {

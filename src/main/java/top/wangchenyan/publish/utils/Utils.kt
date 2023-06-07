@@ -5,6 +5,7 @@ import org.apache.commons.io.IOUtils
 import java.io.BufferedReader
 import java.io.Closeable
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStreamReader
 
 object Utils {
@@ -90,8 +91,8 @@ object Utils {
 
     fun md5(file: File): String {
         if (file.exists().not()) return ""
-        val fis = java.io.FileInputStream(file)
-        val md5: String = DigestUtils.md5Hex(IOUtils.toByteArray(fis))
+        val fis = FileInputStream(file)
+        val md5 = DigestUtils.md5Hex(IOUtils.toByteArray(fis))
         IOUtils.closeQuietly(fis)
         return md5
     }
