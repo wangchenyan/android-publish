@@ -48,7 +48,7 @@ class HttpClient private constructor(
 
     fun download(file: File): CommonResult<Any> {
         val url = getUrlWithQueryParams()
-        Log.i("Start download url: $url")
+        Log.i(TAG, "Start download url: $url")
         val builder = Request.Builder()
         builder.url(url)
         var response: Response? = null
@@ -60,7 +60,7 @@ class HttpClient private constructor(
                 CommonResult.fail(response.code, response.message)
             }
         } catch (e: Exception) {
-            Log.i("download error, ${e.message}")
+            Log.i(TAG, "Download error, ${e.message}")
             e.printStackTrace()
             CommonResult.fail(msg = e.message)
         } finally {
@@ -70,7 +70,7 @@ class HttpClient private constructor(
 
     fun requestRaw(): CommonResult<String> {
         val url = getUrlWithQueryParams()
-        Log.i("Start request url: $url")
+        Log.i(TAG, "Start request url: $url")
         val builder = Request.Builder()
         builder.url(url)
         when (method) {
@@ -90,10 +90,10 @@ class HttpClient private constructor(
         return try {
             response = client.newCall(builder.build()).execute()
             val body = response.body?.string()
-            Log.i("Response code: ${response.code}, body: $body")
+            Log.i(TAG, "Response code: ${response.code}, body: $body")
             CommonResult(response.code, "", body)
         } catch (e: Exception) {
-            Log.i("request error, ${e.message}")
+            Log.i(TAG, "Request error, ${e.message}")
             e.printStackTrace()
             CommonResult.fail(msg = e.message)
         } finally {
@@ -165,14 +165,14 @@ class HttpClient private constructor(
                     val currentProgress = (current * 100f / total).toInt()
                     if (currentProgress != progress) {
                         progress = currentProgress
-                        Log.i("下载进度: $progress%")
+                        Log.i(TAG, "下载进度: $progress%")
                     }
                 }
             }
             fos.flush()
             return CommonResult.success(0)
         } catch (e: IOException) {
-            Log.i("saveFile error, ${e.message}")
+            Log.i(TAG, "saveFile error, ${e.message}")
             e.printStackTrace()
             return CommonResult.fail(msg = e.message)
         } finally {
@@ -181,6 +181,8 @@ class HttpClient private constructor(
     }
 
     companion object {
+        private const val TAG = "HttpClient"
+
         fun get(url: String): HttpClient {
             return HttpClient(url, RequestMethod.GET)
         }

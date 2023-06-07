@@ -24,7 +24,7 @@ class AliOss(
 ) {
 
     fun uploadFile(path: String, file: File, validTime: Long): String {
-        Log.i("上传文件: $file")
+        Log.i(TAG, "上传文件: $file")
         if (file.exists().not()) {
             throw IllegalArgumentException("文件不存在")
         }
@@ -39,7 +39,7 @@ class AliOss(
             ossClient.putObject(request)
             val expiration = Date(System.currentTimeMillis() + validTime)
             val downloadUrl = ossClient.generatePresignedUrl(bucketName, key, expiration)
-            Log.i("上传成功, url: $downloadUrl")
+            Log.i(TAG, "上传成功, url: $downloadUrl")
             return downloadUrl.toString()
         } finally {
             ossClient.shutdown()
@@ -84,12 +84,12 @@ class AliOss(
             val bytes = progressEvent.bytes
             when (progressEvent.eventType) {
                 ProgressEventType.TRANSFER_STARTED_EVENT -> {
-                    Log.i("开始上传")
+                    Log.i(TAG, "开始上传")
                 }
 
                 ProgressEventType.REQUEST_CONTENT_LENGTH_EVENT -> {
                     totalBytes = bytes
-                    Log.i("文件大小: $totalBytes")
+                    Log.i(TAG, "文件大小: $totalBytes")
                 }
 
                 ProgressEventType.REQUEST_BYTE_TRANSFER_EVENT -> {
@@ -97,20 +97,24 @@ class AliOss(
                     val currentProgress = (bytesWritten * 100f / totalBytes).toInt()
                     if (currentProgress != progress) {
                         progress = currentProgress
-                        Log.i("上传进度: $progress%")
+                        Log.i(TAG, "上传进度: $progress%")
                     }
                 }
 
                 ProgressEventType.TRANSFER_COMPLETED_EVENT -> {
-                    Log.i("上传完成")
+                    Log.i(TAG, "上传完成")
                 }
 
                 ProgressEventType.TRANSFER_FAILED_EVENT -> {
-                    Log.i("上传失败")
+                    Log.i(TAG, "上传失败")
                 }
 
                 else -> {}
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "AliOss"
     }
 }

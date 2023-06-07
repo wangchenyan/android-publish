@@ -5,7 +5,11 @@ package top.wangchenyan.publish.utils
  */
 object Log {
 
-    fun i(message: String?) {
+    fun i(tag: String, message: String?) {
+        i("[$tag] $message")
+    }
+
+    private fun i(message: String?) {
         println("[Publish] $message")
     }
 }

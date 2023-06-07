@@ -33,11 +33,10 @@ class TencentJiagu(
     }
 
     fun jiagu(file: File, url: String): File {
-        Log.i("开始加固")
+        Log.i(TAG, "开始加固")
         val md5 = Utils.md5(file)
-        Log.i("原始文件MD5: $md5")
+        Log.i(TAG, "原始文件MD5: $md5")
         val itemId = uploadFile(url, md5)
-        Thread.sleep(10000)
         val result = getResult(itemId)
         val outFile = File(file.parent, "${file.nameWithoutExtension}-legu.apk")
         download(result.first, result.second, outFile)
@@ -64,7 +63,7 @@ class TencentJiagu(
         if (itemId.isNullOrEmpty()) {
             throw IllegalStateException("itemId为空")
         }
-        Log.i("itemId: $itemId")
+        Log.i(TAG, "itemId: $itemId")
         return itemId
     }
 
@@ -84,12 +83,12 @@ class TencentJiagu(
             when (res.taskStatus) {
                 1L -> {
                     val pair = Pair(res.shieldInfo.appUrl, res.shieldInfo.shieldMd5)
-                    Log.i("加固成功, url: ${pair.first}, md5: ${pair.second}")
+                    Log.i(TAG, "加固成功, url: ${pair.first}, md5: ${pair.second}")
                     return pair
                 }
 
                 0L, 2L -> {
-                    Log.i("加固中，等待10s后再次查询")
+                    Log.i(TAG, "加固中，等待10s后再次查询")
                     Thread.sleep(10000)
                 }
 
@@ -101,16 +100,20 @@ class TencentJiagu(
     }
 
     private fun download(url: String, md5: String, file: File) {
-        Log.i("下载加固包")
+        Log.i(TAG, "下载加固包")
         val res = HttpClient.get(url).download(file)
         if (res.isSuccess()) {
             val fileMd5 = Utils.md5(file)
             if (fileMd5 != md5) {
                 throw IllegalStateException("文件MD5不匹配")
             }
-            Log.i("下载成功: $file")
+            Log.i(TAG, "下载成功: $file")
         } else {
             throw IllegalStateException("下载失败")
         }
+    }
+
+    companion object {
+        private const val TAG = "TencentJiagu"
     }
 }

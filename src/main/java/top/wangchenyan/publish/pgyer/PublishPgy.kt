@@ -20,29 +20,29 @@ class PublishPgy(private val apiKey: String) : IPublishClient {
         changeLog: String,
         password: String?
     ): CommonResult<String> {
-        Log.i("开始发布蒲公英")
+        Log.i(TAG, "开始发布蒲公英")
         val tokenRes = getToken(changeLog, password)
         val token = tokenRes.data
         return if (tokenRes.isSuccessWithData() && token!!.isSuccessWithData()) {
-            Log.i("获取上传 token 成功，开始上传文件")
+            Log.i(TAG, "获取上传 token 成功，开始上传文件")
             val uploadRes = uploadApk(token.data!!, apkFile)
             if (uploadRes.isSuccess()) {
-                Log.i("上传成功，等待5s后获取上传结果")
+                Log.i(TAG, "上传成功，等待5s后获取上传结果")
                 Thread.sleep(5000)
                 val buildInfoRes = getBuildInfo(token.data.params.key)
                 val buildInfo = buildInfoRes.data
                 if (buildInfoRes.isSuccessWithData() && buildInfo!!.isSuccessWithData()) {
                     CommonResult.success(buildInfo.data!!.getFullUrl())
                 } else {
-                    Log.i("发布失败, code: ${buildInfoRes.code}, message: ${buildInfoRes.msg}")
+                    Log.i(TAG, "发布失败, code: ${buildInfoRes.code}, message: ${buildInfoRes.msg}")
                     CommonResult.fail(buildInfoRes.code, buildInfoRes.msg)
                 }
             } else {
-                Log.i("文件上传失败, code: ${uploadRes.code}, message: ${uploadRes.msg}")
+                Log.i(TAG, "文件上传失败, code: ${uploadRes.code}, message: ${uploadRes.msg}")
                 CommonResult.fail(uploadRes.code, uploadRes.msg)
             }
         } else {
-            Log.i("获取上传 token 失败, code: ${tokenRes.code}, message: ${tokenRes.msg}")
+            Log.i(TAG, "获取上传 token 失败, code: ${tokenRes.code}, message: ${tokenRes.msg}")
             CommonResult.fail(tokenRes.code, tokenRes.msg)
         }
     }
@@ -78,7 +78,7 @@ class PublishPgy(private val apiKey: String) : IPublishClient {
             apkFile,
             object : FileUploader.ProgressListener {
                 override fun onProgress(progress: Int) {
-                    Log.i("上传进度: $progress%")
+                    Log.i(TAG, "上传进度: $progress%")
                 }
             }
         )
@@ -92,6 +92,7 @@ class PublishPgy(private val apiKey: String) : IPublishClient {
     }
 
     companion object {
+        private const val TAG = "PublishPgy"
         private const val BASE_URL = "https://www.pgyer.com/apiv2/app"
         private const val GET_TOKEN_URL = "$BASE_URL/getCOSToken"
         private const val GET_BUILD_INFO_URL = "$BASE_URL/buildInfo"

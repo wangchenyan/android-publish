@@ -21,12 +21,16 @@ class PublishApk(
         if (apkFile == null || apkFile.exists().not()) {
             throw IllegalArgumentException("Apk文件不存在！")
         }
-        Log.i("开始发布Apk文件: $apkFile")
+        Log.i(TAG, "开始发布Apk文件: $apkFile")
         val res = publishClient.publish(apkFile, changeLog, password)
         if (res.isSuccessWithData()) {
-            Log.i("发布成功！下载地址: ${res.getDataOrThrow()}")
+            Log.i(TAG, "发布成功！下载地址: ${res.getDataOrThrow()}")
         } else {
             throw IllegalStateException(res.msg)
         }
+    }
+
+    companion object {
+        private const val TAG = "PublishApk"
     }
 }

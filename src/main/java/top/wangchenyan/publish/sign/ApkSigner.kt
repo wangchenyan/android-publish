@@ -19,7 +19,7 @@ class ApkSigner(
         if (buildTools.isNullOrEmpty()) {
             throw IllegalStateException("Can not get env: ANDROID_BUILD_TOOLS_HOME, Please set it first")
         }
-        Log.i("开始签名: $file")
+        Log.i(TAG, "开始签名: $file")
         val outPath = File(file.parentFile, "${file.nameWithoutExtension}-sign.apk").path
         val command = StringBuilder().apply {
             append("${buildTools}${File.separator}apksigner sign")
@@ -32,10 +32,14 @@ class ApkSigner(
         }
         val res = Utils.execCommand(command.toString())
         if (res.isSuccess()) {
-            Log.i("签名成功: $outPath")
+            Log.i(TAG, "签名成功: $outPath")
             return File(outPath)
         } else {
             throw IllegalStateException("apksigner exec fail: ${res.msg}")
         }
+    }
+
+    companion object {
+        private const val TAG = "ApkSigner"
     }
 }
