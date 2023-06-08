@@ -20,6 +20,7 @@ dependencies {
     implementation("org.apache.httpcomponents:httpmime:4.5.14")
     implementation("com.aliyun.oss:aliyun-sdk-oss:3.15.1")
     implementation("com.tencentcloudapi:tencentcloud-sdk-java:3.1.771")
+    api("cn.hutool:hutool-all:5.8.19")
 }
 
 java {
