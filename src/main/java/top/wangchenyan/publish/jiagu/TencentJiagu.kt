@@ -1,5 +1,6 @@
 package top.wangchenyan.publish.jiagu
 
+import cn.hutool.crypto.SecureUtil
 import com.tencentcloudapi.common.Credential
 import com.tencentcloudapi.common.profile.ClientProfile
 import com.tencentcloudapi.common.profile.HttpProfile
@@ -8,7 +9,6 @@ import com.tencentcloudapi.ms.v20180408.models.CreateShieldInstanceRequest
 import com.tencentcloudapi.ms.v20180408.models.DescribeShieldResultRequest
 import top.wangchenyan.publish.http.HttpClient
 import top.wangchenyan.publish.utils.Log
-import top.wangchenyan.publish.utils.Utils
 import java.io.File
 
 /**
@@ -33,8 +33,8 @@ class TencentJiagu(
     }
 
     fun jiagu(file: File, url: String): File {
-        Log.i(TAG, "开始加固")
-        val md5 = Utils.md5(file)
+        Log.i(TAG, "开始加固: $file")
+        val md5 = SecureUtil.md5(file)
         Log.i(TAG, "原始文件MD5: $md5")
         val itemId = uploadFile(url, md5)
         val result = getResult(itemId)
@@ -103,7 +103,7 @@ class TencentJiagu(
         Log.i(TAG, "下载加固包")
         val res = HttpClient.get(url).download(file)
         if (res.isSuccess()) {
-            val fileMd5 = Utils.md5(file)
+            val fileMd5 = SecureUtil.md5(file)
             if (fileMd5 != md5) {
                 throw IllegalStateException("文件MD5不匹配")
             }

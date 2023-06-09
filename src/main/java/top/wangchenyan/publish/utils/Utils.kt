@@ -1,11 +1,8 @@
 package top.wangchenyan.publish.utils
 
-import org.apache.commons.codec.digest.DigestUtils
-import org.apache.commons.io.IOUtils
 import java.io.BufferedReader
 import java.io.Closeable
 import java.io.File
-import java.io.FileInputStream
 import java.io.InputStreamReader
 
 object Utils {
@@ -84,26 +81,6 @@ object Utils {
             if (path.extension == ext) {
                 resultList.add(path)
             }
-        }
-    }
-
-    fun md5(file: File): String {
-        if (file.exists().not()) return ""
-        val fis = FileInputStream(file)
-        val md5 = DigestUtils.md5Hex(IOUtils.toByteArray(fis))
-        IOUtils.closeQuietly(fis)
-        return md5
-    }
-
-    fun deleteFile(file: File) {
-        if (file.exists().not()) return
-        if (file.isDirectory) {
-            file.listFiles()?.forEach {
-                deleteFile(it)
-            }
-            file.delete()
-        } else {
-            file.delete()
         }
     }
 }
